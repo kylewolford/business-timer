@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     public final int numTimers = 9;
 
-    public int[] upgradeLevels = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    //public int[] upgradeLevels = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // arbitrarily declared to avoid errors
     public static final String CHANNEL_ID = "123";
