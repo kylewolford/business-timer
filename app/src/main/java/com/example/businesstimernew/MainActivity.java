@@ -11,6 +11,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import java.util.Timer;
@@ -21,38 +22,40 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Timer notes:
      *
-     * safe 48/deposit, 336 to fill (full popularity)
+     * bunker 100, 120, 140 (twice as long if both)
+     *
+     * nightclub safe 336 to fill
+     *
+     * nightclub popularity 480 (28800), 960 (57600) if upgraded (1 upgrade)
      *
      *
      * no upgrades:
-     * bunker 100
-     * herbs 480
-     * rock candy 600
-     * party sugar 498
-     * mints 480
-     * invitations 300
+     * bunker 100 (6000)
+     * herbs 480 (28800)
+     * rock candy 600 (36000)
+     * party sugar 498 (29880)
+     * mints 480 (28800)
+     * invitations 300 (18000)
      *
      * one upgrade:
-     * bunker 120
-     * herbs 400
-     * rock candy 480
-     * party sugar 400
-     * mints 400
-     * invitations 480
+     * bunker 120 (7200)
+     * herbs 400 (24000)
+     * rock candy 480 (28800)
+     * party sugar 400 (24000)
+     * mints 400 (24000)
+     * invitations 480 (28800)
      *
      * two upgrades:
-     * bunker 140
-     * herbs 318
-     * rock candy 360
-     * party sugar 300
-     * mints 318
-     * invitations 180
+     * bunker 140 (8400)
+     * herbs 318 (19080)
+     * rock candy 360 (21600)
+     * party sugar 300 (18000)
+     * mints 318 (19080)
+     * invitations 180 (10800)
      *
      */
 
     public final int numTimers = 9;
-
-    //public int[] upgradeLevels = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // arbitrarily declared to avoid errors
     public static final String CHANNEL_ID = "123";
@@ -65,20 +68,34 @@ public class MainActivity extends AppCompatActivity {
             "party sugar",
             "mints",
             "invitations",
-            "nightclub safe",
-            "nightclub popularity"
+            "nightclub popularity",
+            "nightclub safe"
     };
 
-    public int[] textViews = {R.id.textView2, R.id.textView4, R.id.textView6, R.id.textView8,
+    // textViews that display current times
+    public int[] timeDisplays = {R.id.textView2, R.id.textView4, R.id.textView6, R.id.textView8,
             R.id.textView10, R.id.textView12, R.id.textView14, R.id.textView16, R.id.textView18};
 
-    public int[] buttons = {R.id.button1, R.id.button2, R.id.button3, R.id.button4, R.id.button5,
-            R.id.button6, R.id.button7, R.id.button8, R.id.button9};
+    // checkBoxes that activate/deactivate timers
+    public int[] activeChecks = {R.id.checkBox1, R.id.checkBox2, R.id.checkBox3, R.id.checkBox4,
+            R.id.checkBox5, R.id.checkBox6, R.id.checkBox7, R.id.checkBox8, R.id.checkBox9};
 
-    public int[] times = {6000, 6000, 28800, 36000, 29880, 28800, 18000, 20160, 20160};
+    // checkBoxes that toggle upgrades
+    public int[] upgradeChecks = {R.id.checkBox10, R.id.checkBox11, R.id.checkBox12, R.id.checkBox13,
+            R.id.checkBox14, R.id.checkBox15, R.id.checkBox16, R.id.checkBox17, R.id.checkBox18,
+            R.id.checkBox19, R.id.checkBox20, R.id.checkBox21, R.id.checkBox22, R.id.checkBox23,
+            R.id.checkBox24};
 
 
-    public boolean[] timesActive = {true, true, true, true, true, true, true, true, true};
+
+    // defaults assuming no upgrades (times are in seconds)
+    public int[] times = {6000, 6000, 28800, 36000, 29880, 28800, 28800, 20160, 20160};
+
+    // assume no upgrades to start (values can be 0-2 for the first seven, 0-1 for the eighth, and just 0 for the ninth)
+    public int[] upgradeLevels = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    // assume timers are inactive by default
+    public boolean[] timesActive = {false, false, false, false, false, false, false, false, false};
 
     public boolean running = false;
 
@@ -139,19 +156,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void toggle(int index) {
+    private void toggle(int index) {
         timesActive[index] = !timesActive[index];
-
-        // Get associated button
-        Button curBtn = findViewById(buttons[index]);
-
-        if (timesActive[index]) {
-            curBtn.setText("Deactivate");
-        }
-        else {
-            curBtn.setText("Activate");
-        }
-
+        updateTimers();
     }
 
     public void toggle1(View v) {
@@ -180,6 +187,60 @@ public class MainActivity extends AppCompatActivity {
     }
     public void toggle9(View v) {
         toggle(8);
+    }
+
+
+    private void checkUpgrades(int index) {
+        // 9 businesses, but 15 upgrades
+
+        if (index == 7) { // only one upgrade (no upgrades for index 9)
+            CheckBox curCheck = findViewById(upgradeChecks[14]);
+            if (curCheck.isChecked()) {
+                upgradeLevels[7] = 1;
+            }
+            else {
+                upgradeLevels[7] = 0;
+            }
+        }
+
+        else if (0 <= index && index < 7) { // normal operation
+            CheckBox upgrade1 = findViewById(upgradeChecks[index*2]);
+            CheckBox upgrade2 = findViewById(upgradeChecks[index*2 + 1]);
+            int curUpgrades = 0;
+
+            if (upgrade1.isChecked()) curUpgrades++;
+            if (upgrade2.isChecked()) curUpgrades++;
+
+            upgradeLevels[index] = curUpgrades;
+
+        }
+        updateTimers();
+        return;
+    }
+
+    public void checkUpgrades1(View v) {
+        checkUpgrades(0);
+    }
+    public void checkUpgrades2(View v) {
+        checkUpgrades(1);
+    }
+    public void checkUpgrades3(View v) {
+        checkUpgrades(2);
+    }
+    public void checkUpgrades4(View v) {
+        checkUpgrades(3);
+    }
+    public void checkUpgrades5(View v) {
+        checkUpgrades(4);
+    }
+    public void checkUpgrades6(View v) {
+        checkUpgrades(5);
+    }
+    public void checkUpgrades7(View v) {
+        checkUpgrades(6);
+    }
+    public void checkUpgrades8(View v) {
+        checkUpgrades(7);
     }
 
 
@@ -215,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void updateTimers()
+    private void timersTick()
     {
         if (running) {
             for (int i=0; i<numTimers; i++) {
@@ -239,13 +300,13 @@ public class MainActivity extends AppCompatActivity {
 
     private Runnable Timer_Tick = new Runnable() {
         public void run() {
-            updateTimers();
+            timersTick();
             String timeStr;
             for (int i=0; i<numTimers; i++)
             {
                 timeStr = "" + times[i];
 
-                TextView timeRem = findViewById(textViews[i]);
+                TextView timeRem = findViewById(timeDisplays[i]);
                 timeRem.setText(timeFormat(Integer.parseInt(timeStr)));
             }
 
@@ -253,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void startAll(View v) {
-        // Get associated button
+        // Get associated button to change its text
         Button curBtn = findViewById(R.id.buttonStart);
 
         running = !running;
@@ -264,5 +325,88 @@ public class MainActivity extends AppCompatActivity {
         else {
             curBtn.setText("Start All");
         }
+    }
+
+
+    public void updateTimers() {
+
+        if (running) return; // Can't update timers while running
+
+
+        // Bunker
+        times[0] = 6000 + upgradeLevels[0] * 1200; // 100 mins, 120 mins, 140 mins
+        times[1] = 6000 + upgradeLevels[1] * 1200;
+        if (timesActive[0] && timesActive[1]) {
+            // bunker takes twice as long if both are active
+            times[0] *= 2;
+            times[1] *= 2;
+        }
+
+
+        // Herbs
+        times[2] = 28800;
+        if (upgradeLevels[2] == 1) times[2] = 24000;
+        else if (upgradeLevels[2] == 2) times[2] = 19080;
+
+        // Rock candy
+        times[3] = 36000;
+        if (upgradeLevels[3] == 1) times[3] = 28800;
+        else if (upgradeLevels[3] == 2) times[3] = 21600;
+
+        // Party sugar
+        times[4] = 29880;
+        if (upgradeLevels[4] == 1) times[4] = 24000;
+        else if (upgradeLevels[4] == 2) times[4] = 18000;
+
+        // Mints
+        times[5] = 28800;
+        if (upgradeLevels[5] == 1) times[5] = 24000;
+        else if (upgradeLevels[5] == 2) times[5] = 19080;
+
+        // Invitations
+        times[6] = 28800;
+        if (upgradeLevels[6] == 1) times[6] = 18000;
+        else if (upgradeLevels[6] == 2) times[6] = 10800;
+
+
+        // Nightclub popularity
+        times[7] = 28800;
+        if (upgradeLevels[7] == 1) times[7] = 57600;
+    }
+
+    public void resetAll(View v) {
+        // resetting times
+        times[0] = 6000;
+        times[1] = 6000;
+        times[2] = 28800;
+        times[3] = 36000;
+        times[4] = 29880;
+        times[5] = 28800;
+        times[6] = 28800;
+        times[7] = 20160;
+        times[8] = 20160;
+
+        Button curBtn = findViewById(R.id.buttonStart);
+        curBtn.setText("Start All");
+        running = false;
+
+        // reset active checks
+        CheckBox curCheck;
+        for (int i=0; i<numTimers; i++) {
+            curCheck = findViewById(activeChecks[i]);
+            curCheck.setChecked(false);
+            timesActive[i] = false;
+
+            // reset upgrades
+            upgradeLevels[i] = 0;
+            curCheck = findViewById(upgradeChecks[i]);
+            curCheck.setChecked(false);
+        }
+        for (int i=numTimers; i<upgradeChecks.length; i++) {
+            curCheck = findViewById(upgradeChecks[i]);
+            curCheck.setChecked(false);
+        }
+
+        updateTimers();
     }
 }
