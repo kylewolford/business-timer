@@ -143,8 +143,8 @@ public class MainActivity extends AppCompatActivity {
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, (CHANNEL_ID + i))
                     .setSmallIcon(R.drawable.ic_launcher_background)
-                    .setContentTitle(timerNames[i] + " is done")
-                    .setContentText("Your timer " + timerNames[i] + " has finished running.")
+                    .setContentTitle("Check your " + timerNames[i])
+                    .setContentText(timerNames[i] + " has finished!")
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     // Set the intent that will fire when the user taps the notification
                     .setContentIntent(pendingIntent)
@@ -155,6 +155,34 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    private void TimerMethod()
+    {
+        //This method is called directly by the timer
+        //and runs in the same thread as the timer.
+
+        //We call the method that will work with the UI
+        //through the runOnUiThread method.
+        this.runOnUiThread(Timer_Tick);
+    }
+
+    private Runnable Timer_Tick = new Runnable() {
+        public void run() {
+            timersTick();
+            String timeStr;
+            for (int i=0; i<numTimers; i++)
+            {
+                timeStr = "" + times[i];
+
+                TextView timeRem = findViewById(timeDisplays[i]);
+                timeRem.setText(timeFormat(Integer.parseInt(timeStr)));
+            }
+
+        }
+    };
+
+
+
 
     private void toggle(int index) {
         timesActive[index] = !timesActive[index];
@@ -214,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
             upgradeLevels[index] = curUpgrades;
 
         }
-        updateTimers();
+        restartTimer(index);
         return;
     }
 
@@ -244,15 +272,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void TimerMethod()
-    {
-        //This method is called directly by the timer
-        //and runs in the same thread as the timer.
 
-        //We call the method that will work with the UI
-        //through the runOnUiThread method.
-        this.runOnUiThread(Timer_Tick);
-    }
 
     public String timeFormat(int time)
     {
@@ -296,22 +316,20 @@ public class MainActivity extends AppCompatActivity {
     {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(index, notifications[index].build());
+
+        // Also reset the current timer
+        timesActive[index] = false;
+
+
+        CheckBox curCheck = findViewById(activeChecks[index]);
+        curCheck.setChecked(false);
+
+        // Set timer back to default, checking for upgrades
+        restartTimer(index);
+
     }
 
-    private Runnable Timer_Tick = new Runnable() {
-        public void run() {
-            timersTick();
-            String timeStr;
-            for (int i=0; i<numTimers; i++)
-            {
-                timeStr = "" + times[i];
 
-                TextView timeRem = findViewById(timeDisplays[i]);
-                timeRem.setText(timeFormat(Integer.parseInt(timeStr)));
-            }
-
-        }
-    };
 
     public void startAll(View v) {
         // Get associated button to change its text
@@ -328,50 +346,78 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void restartTimer(int index) {
+        switch(index) {
+            case 0:
+                // Bunker cargo
+                times[0] = 6000 + upgradeLevels[0] * 1200;
+                if (timesActive[0] && timesActive[1]) {
+                    times[0] *= 2;
+                }
+                break;
+
+            case 1:
+                // Bunker research
+                times[1] = 6000 + upgradeLevels[1] * 1200;
+                if (timesActive[0] && timesActive[1]) {
+                    times[1] *= 2;
+                }
+                break;
+
+            case 2:
+                // Herbs
+                times[2] = 28800;
+                if (upgradeLevels[2] == 1) times[2] = 24000;
+                else if (upgradeLevels[2] == 2) times[2] = 19080;
+                break;
+
+            case 3:
+                // Rock candy
+                times[3] = 36000;
+                if (upgradeLevels[3] == 1) times[3] = 28800;
+                else if (upgradeLevels[3] == 2) times[3] = 21600;
+                break;
+
+            case 4:
+                // Party sugar
+                times[4] = 29880;
+                if (upgradeLevels[4] == 1) times[4] = 24000;
+                else if (upgradeLevels[4] == 2) times[4] = 18000;
+                break;
+
+            case 5:
+                // Mints
+                times[5] = 28800;
+                if (upgradeLevels[5] == 1) times[5] = 24000;
+                else if (upgradeLevels[5] == 2) times[5] = 19080;
+                break;
+
+            case 6:
+                // Invitations
+                times[6] = 28800;
+                if (upgradeLevels[6] == 1) times[6] = 18000;
+                else if (upgradeLevels[6] == 2) times[6] = 10800;
+                break;
+
+            case 7:
+                // Nightclub popularity
+                times[7] = 28800;
+                if (upgradeLevels[7] == 1) times[7] = 57600;
+                break;
+            default:
+                return;
+
+        }
+    }
+
     public void updateTimers() {
 
         if (running) return; // Can't update timers while running
 
-
-        // Bunker
-        times[0] = 6000 + upgradeLevels[0] * 1200; // 100 mins, 120 mins, 140 mins
-        times[1] = 6000 + upgradeLevels[1] * 1200;
-        if (timesActive[0] && timesActive[1]) {
-            // bunker takes twice as long if both are active
-            times[0] *= 2;
-            times[1] *= 2;
+        // restart all timers and check for upgrades
+        for (int i=0; i<7; i++) {
+            restartTimer(i);
         }
-
-
-        // Herbs
-        times[2] = 28800;
-        if (upgradeLevels[2] == 1) times[2] = 24000;
-        else if (upgradeLevels[2] == 2) times[2] = 19080;
-
-        // Rock candy
-        times[3] = 36000;
-        if (upgradeLevels[3] == 1) times[3] = 28800;
-        else if (upgradeLevels[3] == 2) times[3] = 21600;
-
-        // Party sugar
-        times[4] = 29880;
-        if (upgradeLevels[4] == 1) times[4] = 24000;
-        else if (upgradeLevels[4] == 2) times[4] = 18000;
-
-        // Mints
-        times[5] = 28800;
-        if (upgradeLevels[5] == 1) times[5] = 24000;
-        else if (upgradeLevels[5] == 2) times[5] = 19080;
-
-        // Invitations
-        times[6] = 28800;
-        if (upgradeLevels[6] == 1) times[6] = 18000;
-        else if (upgradeLevels[6] == 2) times[6] = 10800;
-
-
-        // Nightclub popularity
-        times[7] = 28800;
-        if (upgradeLevels[7] == 1) times[7] = 57600;
     }
 
     public void resetAll(View v) {
