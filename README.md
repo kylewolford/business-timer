@@ -9,3 +9,8 @@ Download instructions (note: this requires Android Studio to be installed on you
 - You should be able to open the unzipped folder in Android Studio and run it natively in Android Studio.
 
 
+
+Credits:
+Head developer: Kyle Wolford
+Head designer: Marcus Davis
+Head tester/debugger: Daniel Osborne
