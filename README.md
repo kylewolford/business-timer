@@ -11,6 +11,9 @@ Download instructions (note: this requires Android Studio to be installed on you
 
 
 Credits:
+
 Head developer: Kyle Wolford
+
 Head designer: Marcus Davis
+
 Head tester/debugger: Daniel Osborne
